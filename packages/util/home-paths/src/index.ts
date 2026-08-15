@@ -1,5 +1,9 @@
 /**
- * Shared filesystem path helpers for DeepSeek Harness user data.
+ * Shared filesystem path helpers for MyAI Chat user data.
+ *
+ * MyAI Chat keeps its data in its own home (`~/.myai-chat`) instead of the
+ * harness default `~/.dsh`, so it never shares sessions, settings, or
+ * credentials with the MyAI Developer (coding) tool.
  *
  * @module @deepseek-ai/dsh-home-paths
  */
@@ -8,13 +12,13 @@ import { opendir, realpath } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { basename, dirname, join, resolve } from 'node:path'
 
-/** Directory name for the default DeepSeek Harness home under the OS home. */
-export const DSH_HOME_DIR_NAME = '.dsh'
+/** Directory name for the default MyAI Chat home under the OS home. */
+export const DSH_HOME_DIR_NAME = '.myai-chat'
 
-/** Stable user-facing display form for the default DeepSeek Harness home. */
+/** Stable user-facing display form for the default MyAI Chat home. */
 export const DEFAULT_DSH_HOME_DISPLAY = `~/${DSH_HOME_DIR_NAME}`
 
-/** Environment variable that overrides the default DeepSeek Harness home. */
+/** Environment variable that overrides the default MyAI Chat home. */
 export const DSH_HOME_ENV = 'DSH_HOME'
 
 /**
@@ -55,7 +59,7 @@ export async function canonicalizeWatchPath(path: string): Promise<string> {
 }
 
 /**
- * Resolve the default DeepSeek Harness home using Node's platform path rules.
+ * Resolve the default MyAI Chat home using Node's platform path rules.
  * @returns the absolute default harness home path.
  */
 export function defaultDshHome(): string {
@@ -74,10 +78,10 @@ export function expandHomePath(path: string): string {
 }
 
 /**
- * Resolve the single-root DeepSeek Harness home.
+ * Resolve the single-root MyAI Chat home.
  *
  * Precedence, highest first: an explicit configured path, `$DSH_HOME`, then
- * `~/.dsh`. The harness keeps all user data under one root. An empty or
+ * `~/.myai-chat`. The app keeps all user data under one root. An empty or
  * whitespace-only `$DSH_HOME` is treated as unset, so a blank override never
  * resolves the home to the current working directory.
  * @param configured - explicit harness-home override, which has highest precedence.
@@ -103,7 +107,7 @@ export function dshHomePath(...segments: string[]): string {
  * Describe a resolved harness home symbolically for user-facing display.
  *
  * It never returns an absolute machine path: the default home is labelled
- * `~/.dsh`, and any configured home is labelled `$DSH_HOME`.
+ * `~/.myai-chat`, and any configured home is labelled `$DSH_HOME`.
  * @param resolvedHome - the absolute path returned by {@link resolveDshHome}.
  * @returns `~/.dsh` for the default home, otherwise `$DSH_HOME`.
  */

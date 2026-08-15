@@ -25,3 +25,11 @@ pnpm dsh web
 ```
 
 Buka http://127.0.0.1:3080
+
+## Lokasi data
+
+MyAI Chat menyimpan datanya di `~/.myai-chat` (terpisah dari `~/.dsh`
+milik MyAI Developer / coding tool), jadi sesi, pengaturan, dan kredensial
+kedua aplikasi tidak bercampur. Override manual tetap bisa lewat variabel
+`DSH_HOME`.
+

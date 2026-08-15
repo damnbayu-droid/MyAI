@@ -194,30 +194,38 @@
 
     - id: ui-settings-plugin-inventory
       name: '@deepseek-ai/dsh-client-ui-settings-plugin-inventory'
+      disabled: true
 
     - id: ui-conversation
       name: '@deepseek-ai/dsh-client-ui-conversation'
 
     # Tool call tree, generic fallback, and keyed business Tool views.
+    # Disabled: MyAI Chat is a pure chat assistant with no tool calls to render.
     - id: ui-tool
       name: '@deepseek-ai/dsh-client-ui-tool'
+      disabled: true
 
     - id: ui-cordis
       name: '@deepseek-ai/dsh-client-ui-cordis'
+      disabled: true
 
     # Durable workflow lifecycle as an independent Chat node after the
     # existing generic workflow tool row.
     - id: ui-workflow-run
       name: '@deepseek-ai/dsh-client-ui-workflow-run'
+      disabled: true
 
     # Turn tail: the produced-files row under each closing assistant message.
     # Remove this entry to turn the surface off; the tail hole renders empty.
     - id: ui-deliverables
       name: '@deepseek-ai/dsh-client-ui-deliverables'
+      disabled: true
 
 
+    # Workspace / directory picker (the "attach a folder to code in" surface).
     - id: ui-workspace
       name: '@deepseek-ai/dsh-client-ui-workspace'
+      disabled: true
 
     # Input triggers: the '/' | '@' pipeline (ui-input-trigger), the command surface over
     # it (ui-commands), and the two reference sources (ui-skill / ui-subagent).
@@ -229,17 +237,21 @@
 
     - id: ui-skill
       name: '@deepseek-ai/dsh-client-ui-skill'
+      disabled: true
 
     - id: ui-subagent
       name: '@deepseek-ai/dsh-client-ui-subagent'
+      disabled: true
 
     # Background jobs: the session-header list over the jobsBySession mirror.
     - id: ui-jobs
       name: '@deepseek-ai/dsh-client-ui-jobs'
+      disabled: true
 
     # Goal surface: GoalBar in the input dock over the goal session projection.
     - id: ui-goal
       name: '@deepseek-ai/dsh-client-ui-goal'
+      disabled: true
 
     # Per-message feedback: Like/Dislike plus an optional note in the
     # assistant-message action strip, over the messageFeedback Remote.
@@ -252,26 +264,31 @@
 
     - id: ui-permission
       name: '@deepseek-ai/dsh-client-ui-permission-presets'
+      disabled: true
 
     # The agent-preset row in General settings: the default preset for
     # sessions created later. Absent a roster it renders nothing.
     - id: ui-agent-preset
       name: '@deepseek-ai/dsh-client-ui-agent-preset'
+      disabled: true
 
     # Plugin configuration: the host-plane sections a user owns, as expandable
     # cards. A namespace this deployment does not expose renders nothing.
     - id: ui-settings-plugins
       name: '@deepseek-ai/dsh-client-ui-settings-plugins'
+      disabled: true
 
     # Plan control: the composer plan seat over the plan projection + /plan channel.
     - id: ui-plan
       name: '@deepseek-ai/dsh-client-ui-plan'
+      disabled: true
 
     - id: ui-user-questions
       name: '@deepseek-ai/dsh-client-ui-user-questions'
 
     - id: ui-trajectory
       name: '@deepseek-ai/dsh-client-ui-trajectory'
+      disabled: true
 
 # ── the agent plane moves behind agent presets ─────────────────────────────
 #

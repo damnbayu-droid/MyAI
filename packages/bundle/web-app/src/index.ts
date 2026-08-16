@@ -11,7 +11,7 @@
  */
 
 import { createRequire } from 'node:module'
-import { networkInterfaces } from 'node:os'
+import { homedir, networkInterfaces } from 'node:os'
 import { fileURLToPath } from 'node:url'
 import type { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
@@ -137,6 +137,26 @@ export function apply(ctx: Context, config: Config): void {
   // Release dependent rows only after bind-dependent trust has been sampled once.
   ctx.provide(WEB_RUNTIME_SERVICE, runtime)
   ctx.plugin(FrontendStatic, { distIndex: internals.resolveDistIndex() })
+  // MyAI Chat is a pure chat assistant: a session must exist before the
+  // composer accepts input, and the client only auto-selects a session through
+  // a workspace. Adopt the home directory as a default workspace when none
+  // exists yet, so a fresh install starts chatting immediately without a
+  // folder picker. Creation is fire-and-forget; a later user-picked workspace
+  // coexists and simply becomes the recent selection.
+  ctx.inject(['workspaceRegistry'], (wsCtx) => {
+    // `get` (not the property proxy) so this bundle's TypeScript project does
+    // not pull dsh-workspace's source into its rootDir: the registry arrives
+    // through the base layer, not as a declared dependency of this package.
+    const registry = wsCtx.get('workspaceRegistry') as {
+      list(): unknown[]
+      create(path: string, title?: string): Promise<unknown>
+    }
+    if (registry.list().length === 0) {
+      void registry.create(homedir(), 'Chat').catch((error: unknown) => {
+        wsCtx.logger.warn('web-app: default workspace create failed:', error)
+      })
+    }
+  })
   if (config.surfaceContext) {
     ctx.inject(['systemPrompt'], (promptCtx) => {
       addHarnessSourceSection(promptCtx, SOURCE_ROOT)

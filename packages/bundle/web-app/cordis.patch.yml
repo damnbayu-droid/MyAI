@@ -222,10 +222,11 @@
       disabled: true
 
 
-    # Workspace / directory picker (the "attach a folder to code in" surface).
+    # Workspace / directory picker. This is the session-creation prerequisite:
+    # the web surface starts a chat only after a workspace is selected, so this
+    # row stays enabled (the picker is shown once, then remembered).
     - id: ui-workspace
       name: '@deepseek-ai/dsh-client-ui-workspace'
-      disabled: true
 
     # Input triggers: the '/' | '@' pipeline (ui-input-trigger), the command surface over
     # it (ui-commands), and the two reference sources (ui-skill / ui-subagent).

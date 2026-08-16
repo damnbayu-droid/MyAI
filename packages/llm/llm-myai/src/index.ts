@@ -47,32 +47,27 @@ const DEFAULT_API_KEY_ENV = 'MYAI_API_KEY'
 const PROVIDER = 'myai'
 
 const DEFAULT_MODELS: DeepSeekCatalogModel[] = [
-  { id: 'v4-flash', name: 'MyAI V4 Flash', contextWindow: DEFAULT_CONTEXT_WINDOW },
-  { id: 'v4-pro', name: 'MyAI V4 Pro', contextWindow: DEFAULT_CONTEXT_WINDOW },
+  { id: 'deepseek-chat', name: 'MyAI Chat', contextWindow: DEFAULT_CONTEXT_WINDOW },
 ]
 
 /**
  * Plugin config, validated by the same-named schemastery schema and doubling
- * as the `llm-myai` settings-section shape. Every field is optional in
- * yml: a missing API key resolves through {@link Config.apiKeyEnv} at each
- * request (a request without any key fails with `MISSING_CREDENTIAL`, not at
- * plugin load), omitted thinking mode uses the provider default, and omitted
- * reasoning effort resolves to `high`.
+ * as the `llm-myai` settings-section shape. Every field is optional in yml: a
+ * missing API key resolves through {@link Config.apiKeyEnv} at each request (a
+ * request without any key fails with `MISSING_CREDENTIAL`, not at plugin load).
  */
 export interface Config {
   /** Credential reference (environment-variable name) resolved per request; defaults to `MYAI_API_KEY`. */
   apiKeyEnv?: string
   /** Endpoint base; falls back to $MYAI_BASE_URL from a trusted environment layer, then the public API. */
   baseURL?: string
-  /** Deployment thinking policy; `disabled` limits every conversation request to `off`. */
-  thinking?: 'enabled' | 'disabled'
-  /** Default thinking effort (default `high`); `off` disables thinking per request. */
-  reasoningEffort?: 'off' | 'high' | 'max'
-  /** Default per-request output cap (default 256,000); a model's own cap and explicit request values win. */
+  /** Gateway use-case selector (default `chatbot_general`); the gateway routes providers on it. */
+  field?: string
+  /** Default per-request output cap; a model's own cap and explicit request values win. */
   maxTokens?: number
   /** Positive context capacity used when the selected model has no exact value (default 1,000,000). */
   defaultContextWindow?: number
-  /** Advisory models shown by discovery consumers; defaults to V4 Flash and V4 Pro. */
+  /** Advisory models shown by discovery consumers; defaults to the MyAI chat route. */
   models?: DeepSeekCatalogModel[]
   /** Maximum provider idle time while one stream read is outstanding (default five minutes). */
   streamIdleTimeoutMs?: number
@@ -91,8 +86,7 @@ const catalogModel: z<DeepSeekCatalogModel> = z.object({
 export const Config: z<Config> = z.object({
   apiKeyEnv: z.string().role('credential-ref').default(DEFAULT_API_KEY_ENV),
   baseURL: z.string(),
-  thinking: z.union(['enabled', 'disabled']),
-  reasoningEffort: z.union(['off', 'high', 'max']),
+  field: z.string().default('chatbot_general'),
   maxTokens: z.number().step(1).min(1).max(Number.MAX_SAFE_INTEGER).default(DEFAULT_MAX_TOKENS),
   defaultContextWindow: z.number().step(1).min(1).default(DEFAULT_CONTEXT_WINDOW),
   models: z.array(catalogModel).default(DEFAULT_MODELS),
@@ -101,7 +95,7 @@ export const Config: z<Config> = z.object({
 })
 
 /** Public API default; the internal endpoint comes from $MYAI_BASE_URL. */
-export const PUBLIC_BASE_URL = 'https://api.myai.nexus/v1'
+export const PUBLIC_BASE_URL = 'https://console.myai.nexus/api/v1'
 
 /** Environment variable naming this provider's endpoint, honored only from trusted layers. */
 const BASE_URL_ENV = 'MYAI_BASE_URL'
@@ -159,11 +153,6 @@ function resolveModels(models: readonly DeepSeekCatalogModel[] | undefined): Dee
  * @returns validated connection facts plus the credential reference.
  */
 export function resolveAdapterOptions(config: Config, environment?: LaunchEnvironmentSnapshot): ResolvedDeepSeekOptions {
-  if (config.thinking === 'disabled'
-    && config.reasoningEffort !== undefined
-    && config.reasoningEffort !== 'off') {
-    throw new Error('llm-myai: only reasoningEffort "off" can be configured when thinking is disabled')
-  }
   if (config.defaultContextWindow !== undefined
     && (!Number.isInteger(config.defaultContextWindow) || config.defaultContextWindow <= 0)) {
     throw new Error('llm-myai: defaultContextWindow must be a positive integer')
@@ -186,8 +175,7 @@ export function resolveAdapterOptions(config: Config, environment?: LaunchEnviro
       ?? environment?.get(BASE_URL_ENV)?.value
       ?? PUBLIC_BASE_URL,
     defaults: {
-      thinking: config.thinking,
-      reasoningEffort: config.reasoningEffort,
+      field: config.field ?? 'chatbot_general',
     },
     maxTokens: config.maxTokens ?? DEFAULT_MAX_TOKENS,
     defaultContextWindow: config.defaultContextWindow ?? DEFAULT_CONTEXT_WINDOW,

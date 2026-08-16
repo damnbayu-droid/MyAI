@@ -56,7 +56,7 @@ export interface DeepSeekConnectionOptions {
    * only this name — a literal key is not a configuration value.
    */
   apiKeyEnv: CredentialRef
-  /** Request defaults applied to every call (thinking mode, effort). */
+  /** Request defaults applied to every call (the gateway use-case `field`). */
   defaults: RequestDefaults
   /** Default per-request output cap; explicit request values win. */
   maxTokens: number
@@ -93,13 +93,6 @@ export const DEFAULT_CONTEXT_WINDOW = 1_000_000
 export const DEFAULT_MAX_TOKENS = 256_000
 const STREAM_IDLE_TIMEOUT_CODE = 'LLM_STREAM_IDLE_TIMEOUT'
 const OFF_REASONING_EFFORT = ReasoningEffortId('off')
-const HIGH_REASONING_EFFORT = ReasoningEffortId('high')
-const MAX_REASONING_EFFORT = ReasoningEffortId('max')
-const REASONING_EFFORTS = [
-  { id: OFF_REASONING_EFFORT, name: 'Off' },
-  { id: HIGH_REASONING_EFFORT, name: 'High' },
-  { id: MAX_REASONING_EFFORT, name: 'Max' },
-] as const
 const OFF_ONLY_REASONING_EFFORTS = [
   { id: OFF_REASONING_EFFORT, name: 'Off' },
 ] as const
@@ -137,7 +130,7 @@ function requestId(headers: Headers): ReturnType<typeof ProviderRequestId> | und
  */
 export function httpErrorCode(status: number, error?: WireError['error']): string {
   if (status === 401 || status === 403) return 'AUTH'
-  const detail = [error?.code, error?.type, error?.message].filter(Boolean).join(' ')
+  const detail = typeof error === 'string' ? error : ''
   if (isQuotaExceededError(detail)) return QUOTA_EXCEEDED_CODE
   if (status === 429) return 'RATE_LIMIT'
   if (status === 400) {
@@ -191,23 +184,12 @@ export class DeepSeekAdapter extends LlmAdapter {
         : modelInfo(provider, configured),
       context: { contextWindow },
       defaultMaxTokens: configured?.maxTokens ?? connection.maxTokens,
-      ...connection.defaults.thinking === 'disabled'
-        ? {
-          reasoning: {
-            efforts: OFF_ONLY_REASONING_EFFORTS,
-            defaultEffort: OFF_REASONING_EFFORT,
-          },
-        }
-        : {
-          reasoning: {
-            efforts: REASONING_EFFORTS,
-            defaultEffort: connection.defaults.reasoningEffort === 'off'
-              ? OFF_REASONING_EFFORT
-              : connection.defaults.reasoningEffort === 'max'
-                ? MAX_REASONING_EFFORT
-                : HIGH_REASONING_EFFORT,
-          },
-        },
+      // The MyAI OS gateway owns routing/thinking internally; the client has
+      // no reasoning toggle to surface, so only the off effort exists.
+      reasoning: {
+        efforts: OFF_ONLY_REASONING_EFFORTS,
+        defaultEffort: OFF_REASONING_EFFORT,
+      },
     })
   }
 
@@ -324,7 +306,7 @@ export class DeepSeekAdapter extends LlmAdapter {
       try {
         const parsed = await response.json() as WireError
         providerError = parsed.error
-        if (providerError?.message) message = providerError.message
+        if (typeof providerError === 'string' && providerError.length > 0) message = providerError
       } catch {
         // Only swallow error-body parsing: the HTTP status still identifies the
         // failure, so malformed gateway JSON must not mask it.
